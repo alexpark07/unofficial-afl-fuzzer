@@ -4,7 +4,7 @@
 
    Written and maintained by Michal Zalewski <lcamtuf@google.com>
 
-   Copyright 2013, 2014 Google Inc. All rights reserved.
+   Copyright 2013, 2014, 2015 Google Inc. All rights reserved.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -37,6 +37,10 @@
 
 #define EXEC_TIMEOUT        1000
 
+/* Timeout rounding factor when auto-scaling (milliseconds): */
+
+#define EXEC_TM_ROUND       20
+
 /* Default memory limit for child process (MB): */
 
 #ifndef __x86_64__ 
@@ -45,11 +49,19 @@
 #  define MEM_LIMIT         50
 #endif /* ^!__x86_64__ */
 
+/* Default memory limit when running in QEMU mode (MB): */
+
+#define MEM_LIMIT_QEMU      200
+
 /* Number of calibration cycles per every new test case (and for test
    cases that show variable behavior): */
 
 #define CAL_CYCLES          10
-#define CAL_CYCLES_LONG     50
+#define CAL_CYCLES_LONG     40
+
+/* The same, but when AFL_NO_VAR_CHECK is set in the environment: */
+
+#define CAL_CYCLES_NO_VAR   4
 
 /* Number of subsequent hangs before abandoning an input file: */
 
@@ -69,6 +81,10 @@
 
 #define HAVOC_MAX_MULT      16
 
+/* Absolute minimum number of havoc cycles (after all adjustments): */
+
+#define HAVOC_MIN           10
+
 /* Maximum stacking for havoc-stage tweaks. The actual value is calculated
    like this: 
 
@@ -81,18 +97,19 @@
 #define HAVOC_STACK_POW2    7
 
 /* Caps on block sizes for cloning and deletion operations. Each of these
-   ranges has a 33% probability of getting picked: */
+   ranges has a 33% probability of getting picked, except for the first
+   two cycles where smaller blocks are favored: */
 
 #define HAVOC_BLK_SMALL     32
 #define HAVOC_BLK_MEDIUM    128
 #define HAVOC_BLK_LARGE     1500
 
-/* Likelihood of using non-favored inputs when there are pending, non-fuzzed
-   test cases (and when there is nothing new pending). This is expressed as
-   percentage: */
+/* Probabilities of skipping non-favored entries in the queue, expressed as
+   percentages: */
 
-#define SKIP_TO_NEW_PROB    99
-#define SKIP_NFAV_PROB      90
+#define SKIP_TO_NEW_PROB    99 /* ...when there are new, pending favorites */
+#define SKIP_NFAV_OLD_PROB  95 /* ...no new favs, cur entry already fuzzed */
+#define SKIP_NFAV_NEW_PROB  75 /* ...no new favs, cur entry not fuzzed yet */
 
 /* Splicing cycle count: */
 
@@ -102,7 +119,7 @@
 
 #define SPLICE_HAVOC        500
 
-/* Maximum value for integer addition / subtraction stages: */
+/* Maximum offset for integer addition / subtraction stages: */
 
 #define ARITH_MAX           35
 
@@ -117,17 +134,50 @@
 
 #define MAX_FILE            (1 * 1024 * 1024)
 
-/* Maximum "extra" token size (-x), in bytes: */
+/* The same, for the test case minimizer: */
 
-#define MAX_EXTRA_FILE      128
+#define TMIN_MAX_FILE       (10 * 1024 * 1024)
 
-/* Maximum number of extras to still carry out deterministic steps: */
+/* Maximum dictionary token size (-x), in bytes: */
 
-#define MAX_DET_EXTRAS      500
+#define MAX_DICT_FILE       128
+
+/* Length limits for auto-detected dictionary tokens: */
+
+#define MIN_AUTO_EXTRA      3
+#define MAX_AUTO_EXTRA      32
+
+/* Maximum number of user-specified dictionary tokens to use in deterministic
+   steps; past this point, the "extras/user" step will be still carried out,
+   but with proportionally lower odds: */
+
+#define MAX_DET_EXTRAS      200
+
+/* Maximum number of auto-extracted dictionary tokens to actually use in fuzzing
+   (first value), and to keep in memory as candidates. The latter should be much
+   higher than the former. */
+
+#define USE_AUTO_EXTRAS     50
+#define MAX_AUTO_EXTRAS     (USE_AUTO_EXTRAS * 10)
+
+/* Scaling factor for the effector map used to skip some of the more
+   expensive deterministic steps. The actual divisor is set to
+   2^EFF_MAP_SCALE2 bytes: */
+
+#define EFF_MAP_SCALE2      3
+
+/* Minimum input file length at which the effector logic kicks in: */
+
+#define EFF_MIN_LEN         128
+
+/* Maximum effector density past which everything is just fuzzed
+   unconditionally (%): */
+
+#define EFF_MAX_PERC        90
 
 /* UI refresh frequency (Hz): */
 
-#define UI_TARGET_HZ        4
+#define UI_TARGET_HZ        5
 
 /* Fuzzer stats file and plot update intervals (sec): */
 
@@ -136,11 +186,19 @@
 
 /* Smoothing divisor for CPU load and exec speed stats (1 - no smoothing). */
 
-#define AVG_SMOOTHING       25
+#define AVG_SMOOTHING       16
 
-/* Sync interval (havoc cycles): */
+/* Sync interval (every n havoc cycles): */
 
 #define SYNC_INTERVAL       5
+
+/* Output directory reuse grace period (minutes): */
+
+#define OUTPUT_GRACE        25
+
+/* Uncomment to use simple file names (id_NNNNNN): */
+
+// #define SIMPLE_FILES
 
 /* List of interesting values to use in fuzzing. */
 
@@ -200,12 +258,15 @@
 #define CLANG_ENV_VAR       "__AFL_CLANG_MODE"
 #define AS_LOOP_ENV_VAR     "__AFL_AS_LOOPCHECK"
 
-/* Distinctive exit code used to indicate failed execution: */
+/* Distinctive bitmap signature used to indicate failed execution: */
 
-#define EXEC_FAIL           85
+#define EXEC_FAIL_SIG       0xfee1dead
+
+/* Distinctive exit code used to indicate MSAN trip condition: */
+
 #define MSAN_ERROR          86
 
-/* Designated file desciptors for forkserver commands (the application will
+/* Designated file descriptors for forkserver commands (the application will
    use FORKSRV_FD and FORKSRV_FD + 1): */
 
 #define FORKSRV_FD          198
@@ -222,11 +283,15 @@
 #define CAL_TMOUT_PERC      125
 #define CAL_TMOUT_ADD       50
 
+/* Number of chances to calibrate a case before giving up: */
+
+#define CAL_CHANCES         3
+
 /* Map size for the traced binary (2^MAP_SIZE_POW2). Must be greater than
    2; you probably want to keep it under 18 or so for performance reasons
    (adjusting AFL_INST_RATIO when compiling is probably a better way to solve
-   problems). You need to recompile the target binary after changing this -
-   otherwise, SEGVs may ensue. */
+   problems with complex programs). You need to recompile the target binary
+   after changing this - otherwise, SEGVs may ensue. */
 
 #define MAP_SIZE_POW2       16
 #define MAP_SIZE            (1 << MAP_SIZE_POW2)
@@ -235,14 +300,29 @@
 
 #define MAX_ALLOC           0x40000000
 
-/* Uncomment this to use inferior line-coverage-based instrumentation. Note
+/* A made-up hashing seed: */
+
+#define HASH_CONST          0xa5b35705
+
+/* Constants for afl-gotcpu to control busy loop timing: */
+
+#define  CTEST_TARGET_MS    5000
+#define  CTEST_BUSY_CYCLES  (10 * 1000 * 1000)
+
+/* Uncomment this to use inferior block-coverage-based instrumentation. Note
    that you need to recompile the target binary for this to have any effect: */
 
 // #define COVERAGE_ONLY
 
+/* Uncomment this to ignore hit counts and output just one bit per tuple.
+   As with the previous setting, you will need to recompile the target
+   binary: */
+
+// #define SKIP_COUNTS
+
 /* Uncomment this to use instrumentation data to record newly discovered paths,
    but do not use them as seeds for fuzzing. This is useful for conveniently
-   measuring coverage that could be attaine by a "dumb" fuzzing algorithm: */
+   measuring coverage that could be attained by a "dumb" fuzzing algorithm: */
 
 // #define IGNORE_FINDS
 
