@@ -41,6 +41,11 @@ SYNC_DIR='/home/bob/sync_dir'
 # Interval (seconds) between sync attempts
 SYNC_INTERVAL=$((30 * 60))
 
+if [ "$PWD" = "/tmp" -o "$PWD" = "/var/tmp" ]; then
+  echo "Error: do not use shared /tmp or /var/tmp directories with this script." 1>&2
+  exit 1
+fi
+
 rm -rf .sync_tmp 2>/dev/null
 mkdir .sync_tmp || exit 1
 
@@ -53,7 +58,7 @@ while :; do
     echo "[*] Retrieving data from ${host}.${FUZZ_DOMAIN}..."
 
     ssh -o 'passwordauthentication no' ${FUZZ_USER}@${host}.$FUZZ_DOMAIN \
-      "cd '$SYNC_DIR' && tar -czf - ${host}_*/queue" >".sync_tmp/${host}.tgz"
+      "cd '$SYNC_DIR' && tar -czf - ${host}_*/[qf]*" >".sync_tmp/${host}.tgz"
 
   done
 

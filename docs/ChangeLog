@@ -1,9 +1,623 @@
+=========
+ChangeLog
+=========
+
+  This is the list of all noteworthy changes made in every public release of
+  the tool. See README for the general instruction manual.
+
+----------------
+Staying informed
+----------------
+
 Want to stay in the loop on major new features? Join our mailing list by
 sending a mail to <afl-users+subscribe@googlegroups.com>.
 
 Not sure if you should upgrade? The lowest currently recommended version
-is 0.90b. If you're stuck on an earlier release, it's strongly advisable
-to download a newer build.
+is 1.48b. If you're stuck on an earlier release, it's strongly advisable
+to get on with the times.
+
+--------------
+Version 1.51b:
+--------------
+
+  - Made it possible to properly override LD_BIND_NOW after one very unusual
+    report of trouble.
+
+  - Cleaned up typos, thanks to Jakub Wilk.
+
+  - Fixed a bug in AFL_DUMB_FORKSRV.
+
+--------------
+Version 1.50b:
+--------------
+
+  - Fixed a flock() bug that would prevent dir reuse errors from kicking
+    in every now and then.
+
+  - Renamed references to ppvm (the project is now called recidivm).
+
+  - Made improvements to file descriptor handling to avoid leaving some fds
+    unnecessarily open in the child process.
+
+  - Fixed a typo or two.
+
+--------------
+Version 1.49b:
+--------------
+
+  - Added code to save original command line in fuzzer_stats and
+    crashes/README.txt. Also saves fuzzer version in fuzzer_stats.
+    Requested by Ben Nagy.
+
+--------------
+Version 1.48b:
+--------------
+
+  - Fixed a bug with QEMU fork server crashes when translation is attempted
+    after a jump to an invalid pointer in the child process (i.e., after
+    bumping into a particularly nasty security bug in the tested binary).
+    Reported by Tyler Nighswander.
+
+--------------
+Version 1.47b:
+--------------
+
+  - Fixed a bug with afl-cmin in -Q mode complaining about binary being not
+    instrumented. Thanks to Jonathan Neuschafer for the bug report.
+
+  - Fixed another bug with argv handling for afl-fuzz in -Q mode. Reported
+    by Jonathan Neuschafer.
+
+  - Improved the use of colors when showing crash counts in -C mode.
+
+--------------
+Version 1.46b:
+--------------
+
+  - Improved instrumentation performance on 32-bit systems by getting rid of
+    xor-swap (oddly enough, xor-swap is still faster on 64-bit) and tweaking
+    alignment.
+
+  - Made path depth numbers more accurate with imported test cases.
+
+--------------
+Version 1.45b:
+--------------
+
+  - Added support for SIMPLE_FILES in config.h for folks who don't like
+    descriptive file names. Generates very simple names without colons,
+    commas, plus signs, dashes, etc.
+
+  - Replaced zero-sized files with symlinks in the variable behavior state
+    dir to simplify examining the relevant test cases.
+
+  - Changed the period of limited-range block ops from 5 to 10 minutes based
+    on a couple of experiments. The basic goal of this delay timer behavior
+    is to better support jobs that are seeded with completely invalid files,
+    in which case, the first few queue cycles may be completed very quickly
+    without discovering new paths. Should have no effect on well-seeded jobs.
+
+  - Made several minor updates to docs.
+
+--------------
+Version 1.44b:
+--------------
+
+  - Corrected two bungled attempts to get the -C mode work properly
+    with afl-cmin (accounting for the short-lived releases tagged 1.42 and
+    1.43b) - sorry.
+
+  - Removed AFL_ALLOW_CRASHES in favor of the -C mode in said tool.
+
+  - Said goodbye to Hello Kitty, as requested by Padraig Brady.
+
+--------------
+Version 1.41b:
+--------------
+
+  - Added AFL_ALLOW_CRASHES=1 to afl-cmin. Allows crashing inputs in the
+    output corpus. Changed the default behavior to disallow it.
+
+  - Made the afl-cmin output dir default to 0700, not 0755, to be consistent
+    with afl-fuzz; documented the rationale for 0755 in afl-plot.
+
+  - Lowered the output dir reuse time limit to 25 minutes as a dice-roll
+    compromise after a discussion on afl-users@.
+
+  - Made afl-showmap accept -o /dev/null without borking out.
+
+  - Added support for crash / hang info in exit codes of afl-showmap.
+
+  - Tweaked block operation scaling to also factor in ballpark run time
+    in cases where queue passes take very little time.
+
+  - Fixed typos and made improvements to several docs.
+
+--------------
+Version 1.40b:
+--------------
+
+  - Switched to smaller block op sizes during the first passes over the
+    queue. Helps keep test cases small.
+
+  - Added memory barrier for run_target(), just in case compilers get
+    smarter than they are today.
+
+  - Updated a bunch of docs.
+
+--------------
+Version 1.39b:
+--------------
+
+  - Added the ability to skip inputs by sending SIGUSR1 to the fuzzer.
+
+  - Reworked several portions of the documentation.
+
+  - Changed the code to reset splicing perf scores between runs to keep
+    them closer to intended length.
+
+  - Reduced the minimum value of -t to 5 for afl-fuzz (~200 exec/sec)
+    and to 10 for auxiliary tools (due to the absence of a fork server).
+
+  - Switched to more aggressive default timeouts (rounded up to 25 ms
+    versus 50 ms - ~40 execs/sec) and made several other cosmetic changes
+    to the timeout code.
+
+--------------
+Version 1.38b:
+--------------
+
+  - Fixed a bug in the QEMU build script, spotted by William Robinet.
+
+  - Improved the reporting of skipped bitflips to keep the UI counters a bit
+    more accurate.
+
+  - Cleaned up related_work.txt and added some non-goals.
+
+  - Fixed typos, thanks to Jakub Wilk.
+
+--------------
+Version 1.37b:
+--------------
+
+  - Added effector maps, which detect regions that do not seem to respond
+    to bitflips and subsequently exclude them from more expensive steps
+    (arithmetics, known ints, etc). This should offer significant performance
+    improvements with quite a few types of text-based formats, reducing the
+    number of deterministic execs by a factor of 2 or so.
+
+  - Cleaned up mem limit handling in afl-cmin.
+
+  - Switched from uname -i to uname -m to work around Gentoo-specific
+    issues with coreutils when building QEMU. Reported by William Robinet.
+
+  - Switched from PID checking to flock() to detect running sessions.
+    Problem, against all odds, bumped into by Jakub Wilk.
+
+  - Added SKIP_COUNTS and changed the behavior of COVERAGE_ONLY in config.h.
+    Useful only for internal benchmarking.
+
+  - Made improvements to UI refresh rates and exec/sec stats to make them
+    more stable.
+
+  - Made assorted improvements to the documentation and to the QEMU build
+    script.
+
+  - Switched from perror() to strerror() in error macros, thanks to Jakub
+    Wilk for the nag.
+
+  - Moved afl-cmin back to bash, wasn't thinking straight. It has to stay
+    on bash because other shells may have restrictive limits on array sizes.
+
+--------------
+Version 1.36b:
+--------------
+
+  - Switched afl-cmin over to /bin/sh. Thanks to Jonathan Gray.
+
+  - Fixed an off-by-one bug in queue limit check when resuming sessions
+    (could cause NULL ptr deref if you are *really* unlucky).
+
+  - Fixed the QEMU script to tolerate i686 if returned by uname -i. Based on
+    a problem report from Sebastien Duquette.
+
+  - Added multiple references to Jakub's ppvm tool.
+
+  - Made several minor improvements to the Makefile.
+
+  - Believe it or not, fixed some typos. Thanks to Jakub Wilk.
+
+--------------
+Version 1.35b:
+--------------
+
+  - Cleaned up regular expressions in some of the scripts to avoid errors
+    on *BSD systems. Spotted by Jonathan Gray.
+
+--------------
+Version 1.34b:
+--------------
+
+  - Performed a substantial documentation and program output cleanup to
+    better explain the QEMU feature.
+
+--------------
+Version 1.33b:
+--------------
+
+  - Added support for AFL_INST_RATIO and AFL_INST_LIBS in the QEMU mode.
+
+  - Fixed a stack allocation crash in QEMU mode (bug in QEMU, fixed with
+    an extra patch applied to the downloaded release).
+
+  - Added code to test the QEMU instrumentation once the afl-qemu-trace
+    binary is built.
+
+  - Modified afl-tmin and afl-showmap to search $PATH for binaries and to
+    better handle QEMU support.
+
+  - Added a check for instrumented binaries when passing -Q to afl-fuzz.
+
+--------------
+Version 1.32b:
+--------------
+
+  - Fixed 'make install' following the QEMU changes. Spotted by Hanno Boeck.
+
+  - Fixed EXTRA_PAR handling in afl-cmin.
+
+--------------
+Version 1.31b:
+--------------
+
+  - Hallelujah! Thanks to Andrew Griffiths, we now support very fast, black-box
+    instrumentation of binary-only code. See qemu_mode/README.qemu.
+
+    To use this feature, you need to follow the instructions in that
+    directory and then run afl-fuzz with -Q.
+
+--------------
+Version 1.30b:
+--------------
+
+  - Added -s (summary) option to afl-whatsup. Suggested by Jodie Cunningham.
+
+  - Added a sanity check in afl-tmin to detect minimization to zero len or
+    excess hangs.
+
+  - Fixed alphabet size counter in afl-tmin.
+
+  - Slightly improved the handling of -B in afl-fuzz.
+
+  - Fixed process crash messages with -m none.
+
+--------------
+Version 1.29b:
+--------------
+
+  - Improved the naming of test cases when orig: is already present in the file
+    name.
+
+  - Made substantial improvements to technical_details.txt.
+
+--------------
+Version 1.28b:
+--------------
+
+  - Made a minor tweak to the instrumentation to preserve the directionality
+    of tuples (i.e., A -> B != B -> A) and to maintain the identity of tight
+    loops (A -> A). You need to recompile targeted binaries to leverage this.
+
+  - Cleaned up some of the afl-whatsup stats.
+
+  - Added several sanity checks to afl-cmin.
+
+--------------
+Version 1.27b:
+--------------
+
+  - Made afl-tmin recursive. Thanks to Hanno Boeck for the tip.
+
+  - Added docs/technical_details.txt.
+
+  - Changed afl-showmap search strategy in afl-cmap to just look into the
+    same place that afl-cmin is executed from. Thanks to Jakub Wilk.
+
+  - Removed current_todo.txt and cleaned up the remaining docs.
+
+--------------
+Version 1.26b:
+--------------
+
+  - Added total execs/sec stat for afl-whatsup.
+
+  - afl-cmin now auto-selects between cp or ln. Based on feedback from
+    Even Huus.
+
+  - Fixed a typo. Thanks to Jakub Wilk.
+
+  - Made afl-gotcpu a bit more accurate by using getrusage instead of
+    times. Thanks to Jakub Wilk.
+
+  - Fixed a memory limit issue during the build process on NetBSD-current.
+    Reported by Thomas Klausner.
+
+--------------
+Version 1.25b:
+--------------
+
+  - Introduced afl-whatsup, a simple tool for querying the status of
+    local synced instances of afl-fuzz.
+
+  - Added -x compiler to clang options on Darwin. Suggested by Filipe
+    Cabecinhas.
+
+  - Improved exit codes for afl-gotcpu.
+
+  - Improved the checks for -m and -t values in afl-cmin. Bug report
+    from Evan Huus.
+
+--------------
+Version 1.24b:
+--------------
+
+  - Introduced afl-getcpu, an experimental tool to empirically measure
+    CPU preemption rates. Thanks to Jakub Wilk for the idea.
+
+--------------
+Version 1.23b:
+--------------
+
+  - Reverted one change to afl-cmin that actually made it slower.
+
+--------------
+Version 1.22b:
+--------------
+
+  - Reworked afl-showmap.c to support normal options, including -o, -q,
+    -e. Also added support for timeouts and memory limits.
+
+  - Made changes to afl-cmin and other scripts to accommodate the new
+    semantics.
+
+  - Officially retired AFL_EDGES_ONLY.
+
+  - Fixed another typo in afl-tmin, courtesy of Jakub Wilk.
+
+--------------
+Version 1.21b:
+--------------
+
+  - Graduated minimize_corpus.sh to afl-cmin. It is now a first-class
+    utility bundled with the fuzzer. 
+
+  - Made significant improvements to afl-cmin to make it faster, more
+    robust, and more versatile.
+
+  - Refactored some of afl-tmin code to make it a bit more readable.
+
+  - Made assorted changes to the doc to document afl-cmin and other stuff.
+
+--------------
+Version 1.20b:
+--------------
+
+  - Added AFL_DUMB_FORKSRV, as requested by Jakub Wilk. This works only
+    in -n mode and allows afl-fuzz to run with "dummy" fork servers that
+    don't output any instrumentation, but follow the same protocol.
+
+  - Renamed AFL_SKIP_CHECKS to AFL_SKIP_BIN_CHECK to make it at least
+    somewhat descriptive.
+
+  - Switched to using clang as the default assembler on MacOS X to work
+    around Xcode issues with newer builds of clang. Testing and patch by
+    Nico Weber.
+
+  - Fixed a typo (via Jakub Wilk).
+
+--------------
+Version 1.19b:
+--------------
+
+  - Improved exec failure detection in afl-fuzz and afl-showmap.
+
+  - Improved Ctrl-C handling in afl-showmap.
+
+  - Added afl-tmin, a handy instrumentation-enabled minimizer.
+
+--------------
+Version 1.18b:
+--------------
+
+  - Fixed a serious but short-lived bug in the resumption behavior introduced
+    in version 1.16b.
+
+  - Added -t nn+ mode for soft-skipping timing-out paths.
+
+--------------
+Version 1.17b:
+--------------
+
+  - Fixed a compiler warning introduced in 1.16b for newer versions of GCC.
+    Thanks to Jakub Wilk and Ilfak Guilfanov.
+
+  - Improved the consistency of saving fuzzer_stats, bitmap info, and
+    auto-dictionaries when aborting fuzzing sessions.
+
+  - Made several noticeable performance improvements to deterministic arith
+    and known int steps.
+
+--------------
+Version 1.16b:
+--------------
+
+  - Added a bit of code to make resumption pick up from the last known
+    offset in the queue, rather than always rewinding to the start. Suggested
+    by Jakub Wilk.
+
+  - Switched to tighter timeout control for slow programs (3x rather than
+    5x average exec speed at init).
+
+--------------
+Version 1.15b:
+--------------
+
+  - Added support for AFL_NO_VAR_CHECK to speed up resumption and inhibit
+    variable path warnings for some programs.
+
+  - Made the trimmer run even for variable paths, since there is no special
+    harm in doing so and it can be very beneficial if the trimming still
+    pans out.
+
+  - Made the UI a bit more descriptive by adding "n/a" instead of "0" in a
+    couple of corner cases.
+
+--------------
+Version 1.14b:
+--------------
+
+  - Added a (partial) dictionary for JavaScript.
+
+  - Added AFL_NO_CPU_RED, as suggested by Jakub Wilk.
+
+  - Tweaked the havoc scaling logic added in 1.12b.
+
+--------------
+Version 1.13b:
+--------------
+
+  - Improved the performance of minimize_corpus.sh by switching to a
+    sort-based approach.
+
+  - Made several minor revisions to the docs.
+
+--------------
+Version 1.12b:
+--------------
+
+  - Made an improvement to dictionary generation to avoid runs of identical
+    bytes.
+
+  - Added havoc cycle scaling to help with slow binaries in -d mode. Based on
+    a thread with Sami Liedes.
+
+  - Added AFL_SYNC_FIRST for afl-fuzz. This is useful for those who obsess
+    over stats, no special purpose otherwise.
+
+  - Switched to more robust box drawing codes, suggested by Jakub Wilk.
+
+  - Created faster 64-bit variants of several critical-path bitmap functions
+    (sorry, no difference on 32 bits).
+
+  - Fixed moar typos, as reported by Jakub Wilk.
+
+--------------
+Version 1.11b:
+--------------
+
+  - Added a bit more info about dictionary strategies to the status screen.
+
+--------------
+Version 1.10b:
+--------------
+
+  - Revised the dictionary behavior to use insertion and overwrite in
+    deterministic steps, rather than just the latter. This improves coverage
+    with SQL and the like.
+
+  - Added a mention of "*" in status_screen.txt, as suggested by Jakub Wilk.
+
+--------------
+Version 1.09b:
+--------------
+
+  - Corrected a cosmetic problem with 'extras' stage count not always being
+    accurate in the stage yields view.
+
+  - Fixed a typo reported by Jakub Wilk and made some minor documentation
+    improvements.
+
+--------------
+Version 1.08b:
+--------------
+
+  - Fixed a div-by-zero bug in the newly-added code when using a dictionary.
+
+--------------
+Version 1.07b:
+--------------
+
+  - Added code that automatically finds and extracts syntax tokens from the
+    input corpus.
+
+  - Fixed a problem with ld dead-code removal option on MacOS X, reported
+    by Filipe Cabecinhas.
+
+  - Corrected minor typos spotted by Jakub Wilk.
+
+  - Added a couple of more exotic archive format samples.
+
+--------------
+Version 1.06b:
+--------------
+
+  - Switched to slightly more accurate (if still not very helpful) reporting
+    of short read and short write errors. These theoretically shouldn't happen
+    unless you kill the forkserver or run out of disk space. Suggested by
+    Jakub Wilk.
+
+  - Revamped some of the allocator and debug code, adding comments and
+    cleaning up other mess.
+
+  - Tweaked the odds of fuzzing non-favored test cases to make sure that
+    baseline coverage of all inputs is reached sooner.
+
+--------------
+Version 1.05b:
+--------------
+
+  - Added a dictionary for WebP.
+
+  - Made some additional performance improvements to minimize_corpus.sh,
+    getting deeper into the bash woods.
+
+--------------
+Version 1.04b:
+--------------
+
+  - Made substantial performance improvements to minimize_corpus.sh with
+    large datasets, albeit at the expense of having to switch back to bash
+    (other shells may have limits on array sizes, etc).
+
+  - Tweaked afl-showmap to support the format used by the new script.
+
+--------------
+Version 1.03b:
+--------------
+
+  - Added code to skip README.txt in the input directory to make the crash
+    exploration mode work better. Suggested by Jakub Wilk.
+
+  - Added a dictionary for SQLite.
+
+--------------
+Version 1.02b:
+--------------
+
+  - Reverted the ./ search path in minimize_corpus.sh because people did
+    not like it.
+
+  - Added very explicit warnings not to run various shell scripts that
+    read or write to /tmp/ (since this is generally a pretty bad idea on
+    multi-user systems).
+
+  - Added a check for /tmp binaries and -f locations in afl-fuzz.
+
+--------------
+Version 1.01b:
+--------------
+
+  - Added dictionaries for XML and GIF.
 
 --------------
 Version 1.00b:
@@ -21,7 +635,7 @@ Version 0.99b:
   - Fixed minimize_corpus.sh to work with dash, as suggested by Jakub Wilk.
 
   - Modified minimize_corpus.sh to try locate afl-showmap in $PATH and ./.
-    Requested by Jakub Wilk.
+    The first part requested by Jakub Wilk.
 
   - Added support for afl-as --version, as required by one funky build
     script. Reported by William Robinet.

@@ -18,3 +18,5 @@ test-instr
 .test-instr0
 .test-instr1
 out_dir/
+tags
+cscope.*
