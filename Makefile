@@ -14,7 +14,7 @@
 #
 
 PROGNAME    = afl
-VERSION     = 1.51b
+VERSION     = 1.53b
 
 PREFIX     ?= /usr/local
 BIN_PATH    = $(PREFIX)/bin
@@ -28,6 +28,10 @@ CFLAGS     ?= -O3 -funroll-loops
 CFLAGS     += -Wall -D_FORTIFY_SOURCE=2 -g -Wno-pointer-sign \
 	      -DAFL_PATH=\"$(HELPER_PATH)\" -DDOC_PATH=\"$(DOC_PATH)\" \
 	      -DVERSION=\"$(VERSION)\"
+
+ifeq "$(shell uname)" "Linux"
+  LDFLAGS  += -ldl
+endif
 
 ifeq "$(findstring clang, $(shell $(CC) --version 2>/dev/null))" ""
   TEST_CC   = afl-gcc
@@ -46,24 +50,24 @@ test_x86:
 	@echo "[+] Everything seems to be working, ready to compile."
 
 afl-gcc: afl-gcc.c $(COMM_HDR) | test_x86
-	$(CC) $(CFLAGS) $(LDFLAGS) $@.c -o $@
+	$(CC) $(CFLAGS) $@.c -o $@ $(LDFLAGS)
 	set -e; for i in afl-g++ afl-clang afl-clang++; do ln -sf afl-gcc $$i; done
 
 afl-as: afl-as.c afl-as.h $(COMM_HDR) | test_x86
-	$(CC) $(CFLAGS) $(LDFLAGS) $@.c -o $@
+	$(CC) $(CFLAGS) $@.c -o $@ $(LDFLAGS) 
 	ln -sf afl-as as
 
 afl-fuzz: afl-fuzz.c $(COMM_HDR) | test_x86
-	$(CC) $(CFLAGS) $(LDFLAGS) $@.c -o $@
+	$(CC) $(CFLAGS) $@.c -o $@ $(LDFLAGS)
 
 afl-showmap: afl-showmap.c $(COMM_HDR) | test_x86
-	$(CC) $(CFLAGS) $(LDFLAGS) $@.c -o $@
+	$(CC) $(CFLAGS) $@.c -o $@ $(LDFLAGS)
 
 afl-tmin: afl-tmin.c $(COMM_HDR) | test_x86
-	$(CC) $(CFLAGS) $(LDFLAGS) $@.c -o $@
+	$(CC) $(CFLAGS) $@.c -o $@ $(LDFLAGS)
 
 afl-gotcpu: afl-gotcpu.c $(COMM_HDR) | test_x86
-	$(CC) $(CFLAGS) $(LDFLAGS) $@.c -o $@
+	$(CC) $(CFLAGS) $@.c -o $@ $(LDFLAGS)
 
 test_build: afl-gcc afl-as afl-showmap
 	@echo "[*] Testing the CC wrapper and instrumentation output..."
