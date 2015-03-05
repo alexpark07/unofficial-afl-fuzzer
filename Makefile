@@ -14,7 +14,7 @@
 #
 
 PROGNAME    = afl
-VERSION     = 1.53b
+VERSION     = 1.56b
 
 PREFIX     ?= /usr/local
 BIN_PATH    = $(PREFIX)/bin
@@ -29,7 +29,7 @@ CFLAGS     += -Wall -D_FORTIFY_SOURCE=2 -g -Wno-pointer-sign \
 	      -DAFL_PATH=\"$(HELPER_PATH)\" -DDOC_PATH=\"$(DOC_PATH)\" \
 	      -DVERSION=\"$(VERSION)\"
 
-ifeq "$(shell uname)" "Linux"
+ifneq "$(filter Linux GNU%,$(shell uname))" ""
   LDFLAGS  += -ldl
 endif
 
@@ -71,7 +71,7 @@ afl-gotcpu: afl-gotcpu.c $(COMM_HDR) | test_x86
 
 test_build: afl-gcc afl-as afl-showmap
 	@echo "[*] Testing the CC wrapper and instrumentation output..."
-	unset AFL_USE_ASAN AFL_USE_MSAN; AFL_QUIET=1 AFL_INST_RATIO=100 AFL_PATH=. ./$(TEST_CC) $(CFLAGS) $(LDFLAGS) test-instr.c -o test-instr
+	unset AFL_USE_ASAN AFL_USE_MSAN; AFL_QUIET=1 AFL_INST_RATIO=100 AFL_PATH=. ./$(TEST_CC) $(CFLAGS) test-instr.c -o test-instr $(LDFLAGS)
 	echo 0 | ./afl-showmap -m none -q -o .test-instr0 ./test-instr
 	echo 1 | ./afl-showmap -m none -q -o .test-instr1 ./test-instr
 	@rm -f test-instr
@@ -106,7 +106,7 @@ publish: clean
 	( cd ~/www/afl/releases/; ln -s -f $(PROGNAME)-$(VERSION).tgz $(PROGNAME)-latest.tgz )
 	cat docs/README >~/www/afl/README.txt
 	cat docs/status_screen.txt >~/www/afl/status_screen.txt
-	cat docs/related_work.txt >~/www/afl/related_work.txt
+	cat docs/historical_notes.txt >~/www/afl/historical_notes.txt
 	cat docs/technical_details.txt >~/www/afl/technical_details.txt
 	cat docs/ChangeLog >~/www/afl/ChangeLog.txt
 	echo -n "$(VERSION)" >~/www/afl/version.txt

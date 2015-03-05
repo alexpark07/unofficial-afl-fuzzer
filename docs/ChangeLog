@@ -17,6 +17,35 @@ is 1.48b. If you're stuck on an earlier release, it's strongly advisable
 to get on with the times.
 
 --------------
+Version 1.56b:
+--------------
+
+  - Renamed related_work.txt to historical_notes.txt.
+
+  - Made minor edits to the ASAN doc.
+
+  - Added docs/sister_projects.txt with a list of inspired or closely
+    related utilities.
+
+--------------
+Version 1.55b:
+--------------
+
+  - Fixed a glitch with afl-showmap opening /dev/null with O_RDONLY when
+    running in quiet mode. Spotted by Tyler Nighswander.
+
+--------------
+Version 1.54b:
+--------------
+
+  - Added another postprocessor example for PNG.
+
+  - Made a cosmetic fix to realloc() handling in experimental/post_library/,
+    suggested by Jakub Wilk.
+
+  - Improved -ldl handling. Suggested by Jakub Wilk.
+
+--------------
 Version 1.53b:
 --------------
 

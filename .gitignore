@@ -20,3 +20,5 @@ test-instr
 out_dir/
 tags
 cscope.*
+afl-latest.tgz
+download.sh
