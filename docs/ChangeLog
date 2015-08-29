@@ -13,8 +13,387 @@ Want to stay in the loop on major new features? Join our mailing list by
 sending a mail to <afl-users+subscribe@googlegroups.com>.
 
 Not sure if you should upgrade? The lowest currently recommended version
-is 1.48b. If you're stuck on an earlier release, it's strongly advisable
+is 1.76b. If you're stuck on an earlier release, it's strongly advisable
 to get on with the times.
+
+--------------
+Version 1.88b:
+--------------
+
+  - Made AFL_EXIT_WHEN_DONE work in non-tty mode. Issue spotted by
+    Jacek Wielemborek.
+
+--------------
+Version 1.87b:
+--------------
+
+  - Added QuickStartGuide.txt, a one-page quick start doc.
+
+  - Fixed several typos spotted by Dominique Pelle.
+
+  - Revamped several parts of README.
+
+--------------
+Version 1.86b:
+--------------
+
+  - Added support for AFL_SKIP_CRASHES, which is a very hackish solution to
+    the problem of resuming sessions with intermittently crashing inputs.
+
+  - Removed the hard-fail terminal size check, replaced with a dynamic
+    warning shown in place of the UI. Based on feedback from Christian Holler.
+
+  - Fixed a minor typo in show_stats. Spotted by Dingbao Xie.
+
+--------------
+Version 1.85b:
+--------------
+
+  - Fixed a garbled sentence in notes on parallel fuzzing. Thanks to Jakub Wilk.
+
+  - Fixed a minor glitch in afl-cmin. Spotted by Jonathan Foote.
+
+--------------
+Version 1.84b:
+--------------
+
+  - Made SIMPLE_FILES behave as expected when naming backup directories for
+    crashes and hangs.
+
+  - Added the total number of favored paths to fuzzer_stats. Requested by
+    Ben Nagy.
+
+  - Made afl-tmin, afl-fuzz, and afl-cmin reject negative values passed to
+    -t and -m, since they generally won't work as expected.
+
+  - Made a fix for no lahf / sahf support on older versions of FreeBSD.
+    Patch contributed by Alex Moneger.
+
+--------------
+Version 1.83b:
+--------------
+
+  - Fixed a problem with xargs -d on non-Linux systems in afl-cmin. Spotted by
+    teor2345 and Ben Nagy.
+
+  - Fixed an implicit declaration in LLVM mode on MacOS X. Reported by 
+    Kai Zhao.
+
+--------------
+Version 1.82b:
+--------------
+
+  - Fixed a harmless but annoying race condition in persistent mode - signal
+    delivery is a bit more finicky than I thought.
+
+  - Updated the documentation to explain persistent mode a bit better.
+
+  - Tweaked AFL_PERSISTENT to force AFL_NO_VAR_CHECK.
+
+--------------
+Version 1.81b:
+--------------
+
+  - Added persistent mode for in-process fuzzing. See llvm_mode/README.llvm.
+    Inspired by Kostya Serebryany and Christian Holler.
+
+  - Changed the in-place resume code to preserve crashes/README.txt. Suggested
+    by Ben Nagy.
+
+  - Included a potential fix for LLVM mode issues on MacOS X, based on the
+    investigation done by teor2345.
+
+--------------
+Version 1.80b:
+--------------
+
+  - Made afl-cmin tolerant of whitespaces in filenames. Suggested by 
+    Jonathan Neuschafer and Ketil Froyn.
+
+  - Added support for AFL_EXIT_WHEN_DONE, as suggested by Michael Rash.
+
+--------------
+Version 1.79b:
+--------------
+
+  - Added support for dictionary levels, see testcases/README.testcases.
+
+  - Reworked the SQL dictionary to use levels.
+
+  - Added a note about Preeny.
+
+--------------
+Version 1.78b:
+--------------
+
+  - Added a dictionary for PDF, contributed by Ben Nagy.
+
+  - Added several references to afl-cov, a new tool by Michael Rash.
+
+  - Fixed a problem with crash reporter detection on MacOS X, as reported by
+    Louis Dassy.
+
+--------------
+Version 1.77b:
+--------------
+
+  - Extended the -x option to support single-file dictionaries.
+
+  - Replaced factory-packaged dictionaries with file-based variants.
+
+  - Removed newlines from HTML keywords in testcases/_extras/html/.
+
+--------------
+Version 1.76b:
+--------------
+
+  - Very significantly reduced the number of duplicate execs during
+    deterministic checks, chiefly in int16 and int32 stages. Confirmed
+    identical path yields. This should improve early-stage efficiency by
+    around 5-10%.
+
+  - Reduced the likelihood of duplicate non-deterministic execs by
+    bumping up lowest stacking factor from 1 to 2. Quickly confirmed
+    that this doesn't seem to have significant impact on coverage with
+    libpng.
+
+  - Added a note about integrating afl-fuzz with third-party tools.
+
+--------------
+Version 1.75b:
+--------------
+
+  - Improved argv_fuzzing to allow it to emit empty args. Spotted by Jakub
+    Wilk.
+
+  - afl-clang-fast now defines __AFL_HAVE_MANUAL_INIT. Suggested by Jakub Wilk.
+
+  - Fixed a libtool-related bug with afl-clang-fast that would make some
+    ./configure invocations generate incorrect output. Spotted by Jakub Wilk.
+
+  - Removed flock() on Solaris. This means no locking on this platform,
+    but so be it. Problem reported by Martin Carpenter.
+
+  - Fixed a typo. Reported by Jakub Wilk.
+
+--------------
+Version 1.74b:
+--------------
+
+  - Added an example argv[] fuzzing wrapper in experimental/argv_fuzzing.
+    Reworked the bash example to be faster, too.
+
+  - Clarified llvm_mode prerequisites for FreeBSD.
+
+  - Improved afl-tmin to use /tmp if cwd is not writeable.
+
+  - Removed redundant includes for sys/fcntl.h, which caused warnings with
+    some nitpicky versions of libc.
+
+  - Added a corpus of basic HTML tags that parsers are likely to pay attention
+    to (no attributes).
+
+  - Added EP_EnabledOnOptLevel0 to llvm_mode, so that the instrumentation is
+    inserted even when AFL_DONT_OPTIMIZE=1 is set.
+
+  - Switched qemu_mode to use the newly-released QEMU 2.3.0, which contains
+    a couple of minor bugfixes.
+
+--------------
+Version 1.73b:
+--------------
+
+  - Fixed a pretty stupid bug in effector maps that could sometimes cause
+    AFL to fuzz slightly more than necessary; and in very rare circumstances,
+    could lead to SEGV if eff_map is aligned with page boundary and followed
+    by an unmapped page. Spotted by Jonathan Gray.
+
+--------------
+Version 1.72b:
+--------------
+
+  - Fixed a glitch in non-x86 install, spotted by Tobias Ospelt.
+
+  - Added a minor safeguard to llvm_mode Makefile following a report from
+    Kai Zhao.
+
+--------------
+Version 1.71b:
+--------------
+
+  - Fixed a bug with installed copies of AFL trying to use QEMU mode. Spotted
+    by G.M. Lime.
+
+  - Added last path / crash / hang times to fuzzer_stats, suggested by
+    Richard Hipp.
+
+  - Fixed a typo, thanks to Jakub Wilk.
+
+--------------
+Version 1.70b:
+--------------
+
+  - Modified resumption code to reuse the original timeout value when resuming
+    a session if -t is not given. This prevents timeout creep in continuous
+    fuzzing.
+
+  - Added improved error messages for failed handshake when AFL_DEFER_FORKSRV
+    is set.
+
+  - Made a slight improvement to llvm_mode/Makefile based on feedback from
+    Jakub Wilk.
+
+  - Refreshed several bits of documentation.
+
+  - Added a more prominent note about the MacOS X trade-offs to Makefile.
+
+--------------
+Version 1.69b:
+--------------
+
+  - Added support for deferred initialization in LLVM mode. Suggested by
+    Richard Godbee.
+
+--------------
+Version 1.68b:
+--------------
+
+  - Fixed a minor PRNG glitch that would make the first seconds of a fuzzing
+    job deterministic. Thanks to Andreas Stieger.
+
+  - Made tmp[] static in the LLVM runtime to keep Valgrind happy (this had
+    no impact on anything else). Spotted by Richard Godbee.
+
+  - Clarified the footnote in README.
+
+--------------
+Version 1.67b:
+--------------
+
+  - Made one more correction to llvm_mode Makefile, spotted by Jakub Wilk.
+
+--------------
+Version 1.66b:
+--------------
+
+  - Added CC / CXX support to llvm_mode Makefile. Requested by Charlie Eriksen.
+
+  - Fixed 'make clean' with gmake. Suggested by Oliver Schneider.
+
+  - Fixed 'make -j n clean all'. Suggested by Oliver Schneider.
+
+  - Removed build date and time from banners to give people deterministic
+    builds. Requested by Jakub Wilk.
+
+--------------
+Version 1.65b:
+--------------
+
+  - Fixed a snafu with some leftover code in afl-clang-fast.
+
+  - Corrected even moar typos.
+
+--------------
+Version 1.64b:
+--------------
+
+  - Further simplified afl-clang-fast runtime by reverting .init_array to
+    __attribute__((constructor(0)). This should improve compatibility with
+    non-ELF platforms.
+
+  - Fixed a problem with afl-clang-fast and -shared libraries. Simplified
+    the code by getting rid of .preinit_array and replacing it with a .comm
+    object. Problem reported by Charlie Eriksen.
+
+  - Removed unnecessary instrumentation density adjustment for the LLVM mode.
+    Reported by Jonathan Neuschafer.
+
+--------------
+Version 1.63b:
+--------------
+
+  - Updated cgroups_asan/ with a new version from Sam, made a couple changes
+    to streamline it and keep parallel afl instances in separate groups.
+
+  - Fixed typos, thanks to Jakub Wilk.
+
+--------------
+Version 1.62b:
+--------------
+
+  - Improved the handling of -x in afl-clang-fast,
+
+  - Improved the handling of low AFL_INST_RATIO settings for QEMU and
+    LLVM modes.
+
+  - Fixed the llvm-config bug for good (thanks to Tobias Ospelt).
+
+--------------
+Version 1.61b:
+--------------
+
+  - Fixed an obscure bug compiling OpenSSL with afl-clang-fast. Patch by
+    Laszlo Szekeres.
+
+  - Fixed a 'make install' bug on non-x86 systems, thanks to Tobias Ospelt.
+
+  - Fixed a problem with half-broken llvm-config on Odroid, thanks to
+    Tobias Ospelt. (There is another odd bug there that hasn't been fully
+    fixed - TBD).
+
+--------------
+Version 1.60b:
+--------------
+
+  - Allowed experimental/llvm_instrumentation/ to graduate to llvm_mode/.
+
+  - Removed experimental/arm_support/, since it's completely broken and likely
+    unnecessary with LLVM support in place.
+
+  - Added ASAN cgroups script to experimental/asan_cgroups/, updated existing
+    docs. Courtesy Sam Hakim and David A. Wheeler.
+
+  - Refactored afl-tmin to reduce the number of execs in common use cases.
+    Ideas from Jonathan Neuschafer and Turo Lamminen.
+
+  - Added a note about CLAs at the bottom of README.
+
+  - Renamed testcases_readme.txt to README.testcases for some semblance of
+    consistency.
+
+  - Made assorted updates to docs.
+
+  - Added MEM_BARRIER() to afl-showmap and afl-tmin, just to be safe.
+
+--------------
+Version 1.59b:
+--------------
+
+  - Imported Laszlo Szekeres' experimental LLVM instrumentation into
+    experimental/llvm_instrumentation. I'll work on including it in the 
+    "mainstream" version soon.
+
+  - Fixed another typo, thanks to Jakub Wilk.
+
+--------------
+Version 1.58b:
+--------------
+
+  - Added a workaround for abort() behavior in -lpthread programs in QEMU mode.
+    Spotted by Aidan Thornton.
+
+  - Made several documentation updates, including links to the static
+    instrumentation tool (sister_projects.txt).
+
+--------------
+Version 1.57b:
+--------------
+
+  - Fixed a problem with exception handling on some versions of MacOS X.
+    Spotted by Samir Aguiar and Anders Wang Kristensen.
+
+  - Tweaked afl-gcc to use BIN_PATH instead of a fixed string in help
+    messages.
 
 --------------
 Version 1.56b:
@@ -808,7 +1187,7 @@ Version 0.88b:
 --------------
 
   - Added support for plotting, with design and implementation based on a
-    prototype design proposed by by Michael Rash. Huge thanks!
+    prototype design proposed by Michael Rash. Huge thanks!
 
   - Added afl-plot.sh, which allows you to, well, generate a nice plot using
     this data.

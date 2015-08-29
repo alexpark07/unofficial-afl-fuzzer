@@ -69,9 +69,10 @@ abi_ulong afl_entry_point, /* ELF entry point (_start) */
           afl_start_code,  /* .text start pointer      */
           afl_end_code;    /* .text end pointer        */
 
-/* Set on the child in forkserver mode: */
+/* Set in the child process in forkserver mode: */
 
 static unsigned char afl_fork_child;
+unsigned int afl_forksrv_pid;
 
 /* Instrumentation ratio: */
 
@@ -133,6 +134,12 @@ static void afl_setup(void) {
 
     if (afl_area_ptr == (void*)-1) exit(1);
 
+    /* With AFL_INST_RATIO set to a low value, we want to touch the bitmap
+       so that the parent doesn't give up on us. */
+
+    if (inst_r) afl_area_ptr[0] = 1;
+
+
   }
 
   if (getenv("AFL_INST_LIBS")) {
@@ -157,6 +164,8 @@ static void afl_forkserver(CPUArchState *env) {
      to talk, assume that we're not running in forkserver mode. */
 
   if (write(FORKSRV_FD + 1, tmp, 4) != 4) return;
+
+  afl_forksrv_pid = getpid();
 
   /* All right, let's await orders... */
 
@@ -202,7 +211,7 @@ static void afl_forkserver(CPUArchState *env) {
 
     /* Get and relay exit status to parent. */
 
-    if (waitpid(child_pid, &status, WUNTRACED) < 0) exit(6);
+    if (waitpid(child_pid, &status, 0) < 0) exit(6);
     if (write(FORKSRV_FD + 1, &status, 4) != 4) exit(7);
 
   }

@@ -187,7 +187,7 @@ static const u8* main_payload_32 =
   "  orb  $1, (%edx, %edi, 1)\n"
 #else
   "  incb (%edx, %edi, 1)\n"
-#endif /** ^SKIP_COUNTS */
+#endif /* ^SKIP_COUNTS */
   "\n"
   "__afl_return:\n"
   "\n"
@@ -295,7 +295,7 @@ static const u8* main_payload_32 =
   "  call  write\n"
   "  addl  $12, %esp\n"
   "\n"
-  "  pushl $2             /* WUNTRACED */\n"
+  "  pushl $0             /* no flags  */\n"
   "  pushl $__afl_temp    /* status    */\n"
   "  pushl __afl_fork_pid /* PID       */\n"
   "  call  waitpid\n"
@@ -388,11 +388,11 @@ static const u8* main_payload_64 =
   "\n"
   "__afl_maybe_log:\n"
   "\n"
-#ifdef  __OpenBSD__
+#if defined(__OpenBSD__)  || (defined(__FreeBSD__) && (__FreeBSD__ < 9))
   "  .byte 0x9f /* lahf */\n"
 #else
   "  lahf\n"
-#endif /* ^__OpenBSD__ */
+#endif /* ^__OpenBSD__, etc */
   "  seto  %al\n"
   "\n"
   "  /* Check if SHM region is already mapped. */\n"
@@ -420,11 +420,11 @@ static const u8* main_payload_64 =
   "__afl_return:\n"
   "\n"
   "  addb $127, %al\n"
-#ifdef  __OpenBSD__
+#if defined(__OpenBSD__)  || (defined(__FreeBSD__) && (__FreeBSD__ < 9))
   "  .byte 0x9e /* sahf */\n"
 #else
   "  sahf\n"
-#endif /* ^__OpenBSD__ */
+#endif /* ^__OpenBSD__, etc */
   "  ret\n"
   "\n"
   ".align 8\n"
@@ -574,7 +574,7 @@ static const u8* main_payload_64 =
   "  movq $" STRINGIFY((FORKSRV_FD + 1)) ", %rdi             /* file desc */\n"
   CALL_L64("write")
   "\n"
-  "  movq $2, %rdx                   /* WUNTRACED */\n"
+  "  movq $0, %rdx                   /* no flags  */\n"
   "  leaq __afl_temp(%rip), %rsi     /* status    */\n"
   "  movq __afl_fork_pid(%rip), %rdi /* PID       */\n"
   CALL_L64("waitpid")

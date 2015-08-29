@@ -39,7 +39,6 @@
 #include <dirent.h>
 #include <fcntl.h>
 
-#include <sys/fcntl.h>
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <sys/shm.h>
@@ -218,6 +217,8 @@ static void run_target(char** argv) {
   if (!quiet_mode)
     SAYF("-- Program output begins --\n");
 
+  MEM_BARRIER();
+
   child_pid = fork();
 
   if (child_pid < 0) PFATAL("fork() failed");
@@ -277,12 +278,14 @@ static void run_target(char** argv) {
 
   setitimer(ITIMER_REAL, &it, NULL);
 
-  if (waitpid(child_pid, &status, WUNTRACED) <= 0) FATAL("waitpid() failed");
+  if (waitpid(child_pid, &status, 0) <= 0) FATAL("waitpid() failed");
 
   child_pid = 0;
   it.it_value.tv_sec = 0;
   it.it_value.tv_usec = 0;
   setitimer(ITIMER_REAL, &it, NULL);
+
+  MEM_BARRIER();
 
   /* Clean up bitmap, analyze exit condition, etc. */
 
@@ -333,6 +336,8 @@ static void set_up_environment(void) {
 
   setenv("MSAN_OPTIONS", "exit_code=" STRINGIFY(MSAN_ERROR) ":"
                          "msan_track_origins=0", 0);
+
+  unsetenv("AFL_PERSISTENT");
 
 }
 
@@ -412,8 +417,7 @@ static void detect_file_args(char** argv) {
 
 static void show_banner(void) {
 
-  SAYF(cCYA "afl-showmap " cBRI VERSION cRST " (" __DATE__ " " __TIME__ 
-       ") by <lcamtuf@google.com>\n");
+  SAYF(cCYA "afl-showmap " cBRI VERSION cRST " by <lcamtuf@google.com>\n");
 
 }
 
@@ -518,7 +522,6 @@ static char** get_qemu_argv(u8* own_loc, char** argv, int argc) {
 
   tmp = getenv("AFL_PATH");
 
-
   if (tmp) {
 
     cp = alloc_printf("%s/afl-qemu-trace", tmp);
@@ -550,9 +553,9 @@ static char** get_qemu_argv(u8* own_loc, char** argv, int argc) {
 
   } else ck_free(own_copy);
 
-  if (!access(AFL_PATH "/afl-qemu-trace", X_OK)) {
+  if (!access(BIN_PATH "/afl-qemu-trace", X_OK)) {
 
-    target_path = new_argv[0] = AFL_PATH "/afl-qemu-trace";
+    target_path = new_argv[0] = BIN_PATH "/afl-qemu-trace";
     return new_argv;
 
   }
@@ -597,8 +600,8 @@ int main(int argc, char** argv) {
 
           }
 
-          if (sscanf(optarg, "%llu%c", &mem_limit, &suffix) < 1)
-            FATAL("Bad syntax used for -m");
+          if (sscanf(optarg, "%llu%c", &mem_limit, &suffix) < 1 ||
+              optarg[0] == '-') FATAL("Bad syntax used for -m");
 
           switch (suffix) {
 
@@ -627,7 +630,10 @@ int main(int argc, char** argv) {
 
         if (strcmp(optarg, "none")) {
           exec_tmout = atoi(optarg);
-          if (exec_tmout < 20) FATAL("Dangerously low value of -t");
+
+          if (exec_tmout < 20 || optarg[0] == '-')
+            FATAL("Dangerously low value of -t");
+
         }
 
         break;

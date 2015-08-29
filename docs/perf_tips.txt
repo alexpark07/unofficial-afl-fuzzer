@@ -50,7 +50,18 @@ Even if you don't have a lightweight harness for a particular target, remember
 that you can always use another, related library to generate a corpus that will
 be then manually fed to a more resource-hungry program later on.
 
-3) Have a closer look at the binary
+3) Use LLVM instrumentation
+---------------------------
+
+When fuzzing slow targets, you can gain 2x performance improvement by using
+the LLVM-based instrumentation mode described in llvm_mode/README.llvm. Note
+that this mode requires the use of clang and will not work with GCC.
+
+The LLVM mode also offers a "persistent", in-process fuzzing mode that can
+work well for certain types of self-contained libraries, and for fast targets,
+can offer performance gains up to 5-10x.
+
+4) Have a closer look at the binary
 -----------------------------------
 
 Check for any parameters or settings that obviously improve performance. For
@@ -76,13 +87,19 @@ Sometimes, you can speed things up simply by specifying /dev/null as the
 config file, or disabling some compile-time features that aren't really needed
 for the job (try ./configure --help). One of the notoriously resource-consuming
 things would be calling other utilities via exec*(), popen(), system(), or
-equivalent calls.
+equivalent calls; for example, tar can invoke external decompression tools.
+Some programs may also intentionally call sleep(), usleep(), or nanosleep();
+vim is a good example of that.
+
+In programs that are slow due to unavoidable initialization overhead, you may
+want to try the LLVM deferred forkserver mode (see llvm_mode/README.llvm),
+which can give you speed gains up to 10x, but needs to be used with care.
 
 Last but not least, if you are using ASAN and the performance is unacceptable,
 consider turning it off for now, and manually examining the generated corpus
 with an ASAN-enabled binary later on.
 
-4) Instrument just what you need
+5) Instrument just what you need
 --------------------------------
 
 Instrument just the libraries you actually want to stress-test right now, one
@@ -93,7 +110,7 @@ Beware of programs that come with oddball third-party libraries bundled with
 their source code (Spidermonkey is a good example of this). Check ./configure
 options to use non-instrumented system-wide copies instead.
 
-5) Parallelize your fuzzers
+6) Parallelize your fuzzers
 ---------------------------
 
 The fuzzer is designed to need ~1 core per job. This means that on a, say,
@@ -104,7 +121,7 @@ The afl-gotcpu utility can help you understand if you still have idle CPU
 capacity on your system. (It won't tell you about memory bandwidth, cache
 misses, or similar factors, but they are less likely to be a concern.)
 
-6) Keep memory use and timeouts in check
+7) Keep memory use and timeouts in check
 ----------------------------------------
 
 If you have increased the -m or -t limits more than truly necessary, consider
@@ -120,7 +137,7 @@ a fair amount of time allocating and initializing megabytes of memory when
 presented with pathological inputs. Low -m values can make them give up sooner
 and not waste CPU time.
 
-7) Check OS configuration
+8) Check OS configuration
 -------------------------
 
 There are several OS-level factors that may affect fuzzing speed:
@@ -154,7 +171,7 @@ There are several OS-level factors that may affect fuzzing speed:
     SCHED_RR - can usually speed things up, too, but needs to be done with
     care.
 
-8) If all other options fail, use -d
+9) If all other options fail, use -d
 ------------------------------------
 
 For programs that are genuinely slow, in cases where you really can't escape
